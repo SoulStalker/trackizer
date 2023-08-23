@@ -6,6 +6,7 @@ apple = Flask(__name__)
 def index():
     return 'Life of coder'
 
+
 if __name__ == '__main__':
     apple.run(debug=True)
 
