@@ -7,7 +7,6 @@ from flask_migrate import Migrate
 migrate = Migrate(apple, db)
 cli = FlaskGroup(apple)
 
-
 if __name__ == '__main__':
     cli()
 

@@ -28,7 +28,7 @@ class CurrentTask(Resource):
 
     def post(self):
         data = request.json
-        new_task = Task(title=data['title'], description=data['description'], state_id=current_state_id)
+        new_task = Task(title=data['title'], description=data['description'], state_id=2)
         # todo soulstalker поправить current_state_id после миграций
         db.session.add(new_task)
         db.session.commit()
