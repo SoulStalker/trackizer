@@ -1,7 +1,16 @@
 from flask import request
 from flask_restx import Namespace, Resource
-from .models import Task, TaskState
-from .config import db
+from models import Task, TaskState, Base
+from config import DSN
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+
+engine = create_engine(DSN)
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
+
 
 api = Namespace('tasks', description='Task related operations')
 
@@ -15,8 +24,8 @@ class DailyTask(Resource):
     def post(self):
         data = request.json
         new_task = Task(title=data['title'], description=data['description'])
-        db.session.add(new_task)
-        db.session.commit()
+        session.add(new_task)
+        session.commit()
         return new_task.to_dict(), 201
 
 
@@ -30,8 +39,8 @@ class CurrentTask(Resource):
         data = request.json
         new_task = Task(title=data['title'], description=data['description'], state_id=2)
         # todo soulstalker поправить current_state_id после миграций
-        db.session.add(new_task)
-        db.session.commit()
+        session.add(new_task)
+        session.commit()
         return new_task.to_dict(), 201
 
 
