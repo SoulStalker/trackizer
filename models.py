@@ -1,8 +1,9 @@
+from app import db, session, Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Time, create_engine
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from config import DSN
-Base = declarative_base()
+# from config import DSN
+# Base = declarative_base()
 
 
 class TaskState(Base):
@@ -10,7 +11,7 @@ class TaskState(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(32), nullable=False)
-    description = Column(String(200), nullable=True)
+    description = Column(String(500), nullable=True)
 
 
 class Task(Base):
@@ -18,7 +19,7 @@ class Task(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(100), nullable=False)
-    description = Column(String(200), nullable=True)
+    description = Column(String(500), nullable=True)
     start_time = Column(Time, nullable=True)
     end_time = Column(Time, nullable=True)
     completed = Column(Boolean, default=False)
@@ -38,5 +39,5 @@ class Task(Base):
         }
 
 
-engine = create_engine(DSN)
-Base.metadata.create_all(engine)
+# engine = create_engine(DSN)
+# Base.metadata.create_all(engine)
