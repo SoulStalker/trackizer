@@ -1,31 +1,31 @@
-from app import db, session, Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Time, create_engine
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from app import session, Base, db
+# from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Time, create_engine
+# from sqlalchemy.orm import relationship
+# from sqlalchemy.ext.declarative import declarative_base
 # from config import DSN
 # Base = declarative_base()
 
 
-class TaskState(Base):
-    __tablename__ = 'task_states'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(32), nullable=False)
-    description = Column(String(500), nullable=True)
+# class TaskState(Base):
+#     __tablename__ = 'task_states'
+#
+#     id = Column(Integer, primary_key=True)
+#     name = Column(String(32), nullable=False)
+#     description = Column(String(500), nullable=True)
 
 
 class Task(Base):
     __tablename__ = 'tasks'
 
-    id = Column(Integer, primary_key=True)
-    title = Column(String(100), nullable=False)
-    description = Column(String(500), nullable=True)
-    start_time = Column(Time, nullable=True)
-    end_time = Column(Time, nullable=True)
-    completed = Column(Boolean, default=False)
-
-    state_id = Column(Integer, ForeignKey('task_states.id'))
-    state = relationship('TaskState', backref='tasks')
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
+    # start_time = Column(Time, nullable=True)
+    # end_time = Column(Time, nullable=True)
+    # completed = Column(Boolean, default=False)
+    #
+    # state_id = Column(Integer, ForeignKey('task_states.id'))
+    # state = relationship('TaskState', backref='tasks')
 
     def to_dict(self):
         return {
