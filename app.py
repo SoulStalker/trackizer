@@ -3,6 +3,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
+from flask_jwt_extended import JWTManager
 
 from datetime import datetime, time
 
@@ -20,6 +21,8 @@ session = scoped_session(sessionmaker(
 
 Base = declarative_base()
 Base.query = session.query_property()
+
+jwt = JWTManager()
 
 from models import *
 

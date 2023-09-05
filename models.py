@@ -4,6 +4,8 @@ from sqlalchemy.orm import relationship
 # from sqlalchemy.ext.declarative import declarative_base
 # from config import DSN
 # Base = declarative_base()
+from flask_jwt_extended import create_access_token
+from datetime import timedelta
 
 
 class TaskState(Base):
@@ -37,6 +39,24 @@ class Task(Base):
             'completed': self.completed,
             'state': self.state.name if self.state else None
         }
+
+
+class Users(Base):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(250), nullable=False)
+    email = db.Column(db.String(250), nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    tasks = relationship('Task', backref='Users', lazy=True)
+
+    def get_token(self, expire_hours=24):
+        expire_delta = timedelta(expire_hours)
+        token = create_access_token(identity=self.id, expires_delta=expire_delta)
+        return token
+
+
+
 
 
 # engine = create_engine(DSN)
