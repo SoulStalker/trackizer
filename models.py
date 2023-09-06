@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 # Base = declarative_base()
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
+from passlib.hash import bcrypt
 
 
 class TaskState(Base):
@@ -20,6 +21,7 @@ class Task(Base):
     __tablename__ = 'tasks'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500), nullable=True)
     start_time = db.Column(db.Time, nullable=True)
@@ -45,16 +47,28 @@ class Users(Base):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(250), nullable=False)
-    email = db.Column(db.String(250), nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    password = db.Column(db.String(50), nullable=False)
     tasks = relationship('Task', backref='Users', lazy=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.name = kwargs.get('name')
+        self.email = kwargs.get('email')
+        self.password = bcrypt.hash(kwargs.get('password'))
 
     def get_token(self, expire_hours=24):
         expire_delta = timedelta(expire_hours)
         token = create_access_token(identity=self.id, expires_delta=expire_delta)
         return token
 
+    @classmethod
+    def auth(cls, email, password):
+        user = cls.query.filter(cls.email == email).one()
+        if not bcrypt.verify(password, user.password):
+            raise Exception('No such user and password')
+        return user
 
 
 

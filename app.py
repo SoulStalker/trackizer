@@ -3,26 +3,24 @@ import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
-from flask_jwt_extended import JWTManager
-
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from datetime import datetime, time
-
-from config import DSN
+from config import DSN, Config
 from models import *
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
 client = app.test_client()
 
 engine = create_engine(DSN)
 
-session = scoped_session(sessionmaker(
-    autocommit=False, autoflush=False, bind=engine))
+session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
 Base = declarative_base()
 Base.query = session.query_property()
 
-jwt = JWTManager()
+jwt = JWTManager(app)
 
 from models import *
 
@@ -30,11 +28,17 @@ Base.metadata.create_all(bind=engine)
 
 
 @app.route('/api/current', methods=['GET'])
+@jwt_required()
 def get_tasks_list():
     """
     Tasks from Current tab
     """
-    tasks = Task.query.filter(Task.completed == False, Task.start_time == None)
+    user_id = get_jwt_identity()
+    tasks = Task.query.filter(
+        Task.completed == False,
+        Task.start_time == None,
+        Task.user_id == user_id
+    )
     serialized = []
     for task in tasks:
         serialized.append({
@@ -47,13 +51,16 @@ def get_tasks_list():
 
 
 @app.route('/api', methods=['POST'])
+@jwt_required()
 def add_new_task():
+    user_id = get_jwt_identity()
     data = request.json
 
     start_time_str = data.get('start_time')
     end_time_str = data.get('end_time')
 
     new_task = Task(
+        user_id=user_id,
         title=data['title'],
         description=data['description'],
         start_time=datetime.strptime(start_time_str, '%H:%M').time() if start_time_str else None,
@@ -71,8 +78,10 @@ def add_new_task():
 
 
 @app.route('/api/<int:task_id>', methods=['PUT'])
+@jwt_required()
 def update_task(task_id):
-    task = Task.query.filter(Task.id == task_id).first()
+    user_id = get_jwt_identity()
+    task = Task.query.filter(Task.id == task_id, Task.user_id == user_id).first()
     params = request.json
     if not task:
         return {'message': f'No task with id {task_id}'}, 400
@@ -89,8 +98,10 @@ def update_task(task_id):
 
 
 @app.route('/api/<int:task_id>', methods=['DELETE'])
+@jwt_required()
 def del_task(task_id):
-    task = Task.query.filter(Task.id == task_id).first()
+    user_id = get_jwt_identity()
+    task = Task.query.filter(Task.id == task_id, Task.user_id == user_id).first()
     if not task:
         return {'message': f'No task with id {task_id}'}, 400
     session.delete(task)
@@ -99,6 +110,7 @@ def del_task(task_id):
 
 
 @app.route('/api/completed', methods=['GET'])
+@jwt_required()
 def get_completed_tasks():
     """
     Completed tasks
@@ -116,6 +128,7 @@ def get_completed_tasks():
 
 
 @app.route('/api/daily', methods=['GET'])
+@jwt_required()
 def get_daily_tasks():
     """
     Daily tasks
@@ -134,8 +147,26 @@ def get_daily_tasks():
     return jsonify(serialized)
 
 
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    params = request.json
+    user = Users(**params)
+    session.add(user)
+    session.commit()
+    token = user.get_token()
+    return {'access_token': token}
+
+
+@app.route('/api/signin', methods=['POST'])
+def signin():
+    params = request.json
+    user = Users.auth(**params)
+    token = user.get_token()
+    return {'access_token': token}
+
+
 @app.teardown_appcontext
-def close_session(exeption=None):
+def close_session(exception=None):
     session.remove()
 
 
