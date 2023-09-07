@@ -115,7 +115,8 @@ def get_completed_tasks():
     """
     Completed tasks
     """
-    tasks = Task.query.filter(Task.completed == True)
+    user_id = get_jwt_identity()
+    tasks = Task.query.filter(Task.completed == True, Task.user_id == user_id)
     serialized = []
     for task in tasks:
         serialized.append({
@@ -133,7 +134,8 @@ def get_daily_tasks():
     """
     Daily tasks
     """
-    tasks = Task.query.filter(Task.start_time != None)
+    user_id = get_jwt_identity()
+    tasks = Task.query.filter(Task.start_time != None, Task.user_id == user_id)
     serialized = []
     for task in tasks:
         serialized.append({
