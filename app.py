@@ -49,12 +49,15 @@ def get_tasks_list():
     """
     Tasks from Current tab
     """
-    user_id = get_jwt_identity()
-    tasks = Task.query.filter(
-        Task.completed == False,
-        Task.start_time == None,
-        Task.user_id == user_id
-    )
+    try:
+        user_id = get_jwt_identity()
+        tasks = Task.query.filter(
+            Task.completed == False,
+            Task.start_time == None,
+            Task.user_id == user_id
+        )
+    except Exception:
+        return {'message': str(Exception)}, 400
     return tasks
 
 
@@ -65,8 +68,11 @@ def get_completed_tasks():
     """
     Completed tasks
     """
-    user_id = get_jwt_identity()
-    tasks = Task.query.filter(Task.completed == True, Task.user_id == user_id)
+    try:
+        user_id = get_jwt_identity()
+        tasks = Task.query.filter(Task.completed == True, Task.user_id == user_id)
+    except Exception:
+        return {'message': str(Exception)}, 400
     return tasks
 
 
@@ -77,8 +83,11 @@ def get_daily_tasks():
     """
     Daily tasks
     """
-    user_id = get_jwt_identity()
-    tasks = Task.query.filter(Task.start_time != None, Task.user_id == user_id)
+    try:
+        user_id = get_jwt_identity()
+        tasks = Task.query.filter(Task.start_time != None, Task.user_id == user_id)
+    except Exception:
+        return {'message': str(Exception)}, 400
     return tasks
 
 
@@ -87,17 +96,13 @@ def get_daily_tasks():
 @use_kwargs(TaskSchema)
 @marshal_with(TaskSchema)
 def add_new_task(**kwargs):
-    user_id = get_jwt_identity()
-    data = request.json
-    new_task = Task(user_id=user_id, **kwargs)
-    session.add(new_task)
-    session.commit()
-    serialized = {
-        'id': new_task.id,
-        'title': new_task.title,
-        'description': new_task.description,
-        'completed': False,
-    }
+    try:
+        user_id = get_jwt_identity()
+        new_task = Task(user_id=user_id, **kwargs)
+        session.add(new_task)
+        session.commit()
+    except Exception:
+        return {'message': str(Exception)}, 400
     return new_task
 
 
@@ -105,34 +110,30 @@ def add_new_task(**kwargs):
 @jwt_required()
 @use_kwargs(TaskSchema)
 @marshal_with(TaskSchema)
-def update_task(task_id):
+def update_task(task_id, **kwargs):
     user_id = get_jwt_identity()
     task = Task.query.filter(Task.id == task_id, Task.user_id == user_id).first()
-    params = request.json
     if not task:
         return {'message': f'No task with id {task_id}'}, 400
-    for key, value in params.items():
+    for key, value in kwargs.items():
         setattr(task, key, value)
     session.commit()
-    serialized = {
-        'id': task.id,
-        'title': task.title,
-        'description': task.description,
-        'completed': task.completed,
-    }
-    return serialized
+    return task
 
 
 @app.route('/api/<int:task_id>', methods=['DELETE'])
 @jwt_required()
 @marshal_with(TaskSchema)
 def del_task(task_id):
-    user_id = get_jwt_identity()
-    task = Task.query.filter(Task.id == task_id, Task.user_id == user_id).first()
-    if not task:
-        return {'message': f'No task with id {task_id}'}, 400
-    session.delete(task)
-    session.commit()
+    try:
+        user_id = get_jwt_identity()
+        task = Task.query.filter(Task.id == task_id, Task.user_id == user_id).first()
+        if not task:
+            return {'message': f'No task with id {task_id}'}, 400
+        session.delete(task)
+        session.commit()
+    except Exception:
+        return {'message': str(Exception)}, 400
     return '', 204
 
 
@@ -150,9 +151,8 @@ def signup(**kwargs):
 @app.route('/api/signin', methods=['POST'])
 @use_kwargs(UserSchema(only=('email', 'password')))
 @marshal_with(AuthSchema)
-def signin():
-    params = request.json
-    user = Users.auth(**params)
+def signin(**kwargs):
+    user = Users.auth(**kwargs)
     token = user.get_token()
     return {'access_token': token}
 
@@ -160,6 +160,17 @@ def signin():
 @app.teardown_appcontext
 def close_session(exception=None):
     session.remove()
+
+
+@app.errorhandler(422)
+def handle_error(err):
+    headers = err.data.get('headers', None)
+    messages = err.data.get('messages', ['Invalid Request.'])
+    logger.warning(f'Invalid input params: {messages}')
+    if headers:
+        return jsonify({'message': messages}), 400, headers
+    else:
+        return jsonify({'message': messages}), 400
 
 
 docs.register(get_tasks_list)
