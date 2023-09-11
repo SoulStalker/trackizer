@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
-from datetime import datetime, time
 from config import DSN, Config
 from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec import APISpec
@@ -68,14 +67,6 @@ def get_completed_tasks():
     """
     user_id = get_jwt_identity()
     tasks = Task.query.filter(Task.completed == True, Task.user_id == user_id)
-    # serialized = []
-    # for task in tasks:
-    #     serialized.append({
-    #         'id': task.id,
-    #         'title': task.title,
-    #         'description': task.description,
-    #         'completed': task.completed
-    #     })
     return tasks
 
 
@@ -88,16 +79,6 @@ def get_daily_tasks():
     """
     user_id = get_jwt_identity()
     tasks = Task.query.filter(Task.start_time != None, Task.user_id == user_id)
-    # serialized = []
-    # for task in tasks:
-    #     serialized.append({
-    #         'id': task.id,
-    #         'title': task.title,
-    #         'description': task.description,
-    #         'start_time': task.start_time.strftime('%H:%M') if task.start_time else None,
-    #         'end_time': task.end_time.strftime('%H:%M') if task.end_time else None,
-    #         'completed': task.completed,
-    #     })
     return tasks
 
 
@@ -108,17 +89,6 @@ def get_daily_tasks():
 def add_new_task(**kwargs):
     user_id = get_jwt_identity()
     data = request.json
-
-    # start_time_str = data.get('start_time')
-    # end_time_str = data.get('end_time')
-    #
-    # new_task = Task(
-    #     user_id=user_id,
-    #     title=data['title'],
-    #     description=data['description'],
-    #     start_time=datetime.strptime(start_time_str, '%H:%M').time() if start_time_str else None,
-    #     end_time=datetime.strptime(end_time_str, '%H:%M').time() if end_time_str else None
-    # )
     new_task = Task(user_id=user_id, **kwargs)
     session.add(new_task)
     session.commit()
@@ -170,7 +140,6 @@ def del_task(task_id):
 @use_kwargs(UserSchema)
 @marshal_with(AuthSchema)
 def signup(**kwargs):
-    # params = request.json
     user = Users(**kwargs)
     session.add(user)
     session.commit()
@@ -192,6 +161,7 @@ def signin():
 def close_session(exception=None):
     session.remove()
 
+
 docs.register(get_tasks_list)
 docs.register(get_daily_tasks)
 docs.register(get_completed_tasks)
@@ -200,7 +170,6 @@ docs.register(update_task)
 docs.register(del_task)
 docs.register(signup)
 docs.register(signin)
-
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=False)

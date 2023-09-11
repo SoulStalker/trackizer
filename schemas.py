@@ -13,12 +13,9 @@ class TaskSchema(Schema):
 
 
 class UserSchema(Schema):
-    name = fields.String(required=True, validate=[
-        validate.Length(max=250)])
-    email = fields.String(required=True, validate=[
-        validate.Length(max=250)])
-    password = fields.String(required=True, validate=[
-        validate.Length(max=100)], load_only=True)
+    name = fields.String(required=True, validate=[validate.Length(max=50)])
+    email = fields.String(required=True, validate=[validate.Length(max=50)])
+    password = fields.String(required=True, validate=[validate.Length(max=50)], load_only=True)
     tasks = fields.Nested(TaskSchema, many=True, dump_only=True)
 
 
