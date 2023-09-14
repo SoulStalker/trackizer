@@ -1,20 +1,8 @@
-from app import session, Base, db
-# from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Time, create_engine
+from . import session, Base, db
 from sqlalchemy.orm import relationship
-# from sqlalchemy.ext.declarative import declarative_base
-# from config import DSN
-# Base = declarative_base()
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 from passlib.hash import bcrypt
-
-
-# class TaskState(Base):
-#     __tablename__ = 'task_states'
-#
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(32), nullable=False)
-#     description = db.Column(db.String(500), nullable=True)
 
 
 class Task(Base):
@@ -27,9 +15,7 @@ class Task(Base):
     start_time = db.Column(db.Time, nullable=True)
     end_time = db.Column(db.Time, nullable=True)
     completed = db.Column(db.Boolean, default=False)
-    #
-    # state_id = db.Column(db.Integer, db.ForeignKey('task_states.id'))
-    # state = relationship('TaskState', backref='tasks')
+
 
     def to_dict(self):
         return {
@@ -70,8 +56,3 @@ class Users(Base):
             raise Exception('No such user and password')
         return user
 
-
-
-
-# engine = create_engine(DSN)
-# Base.metadata.create_all(engine)
